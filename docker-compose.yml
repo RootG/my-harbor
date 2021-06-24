@@ -1,7 +1,7 @@
 version: '2.3'
 services:
   registry:
-    image: goharbor/registry-photon:v2.1.4
+    image: goharbor/registry-photon:v2.3.0
     container_name: registry
     restart: always
     cap_drop:
@@ -21,9 +21,8 @@ services:
         target: /harbor_cust_cert
     networks:
       - harbor
-      - harbor-clair
   registryctl:
-    image: goharbor/harbor-registryctl:v2.1.4
+    image: goharbor/harbor-registryctl:v2.3.0
     container_name: registryctl
     env_file:
       - ./common/config/registryctl/env
@@ -46,7 +45,7 @@ services:
     networks:
       - harbor
   postgresql:
-    image: goharbor/harbor-db:v2.1.4
+    image: goharbor/harbor-db:v2.3.0
     container_name: harbor-db
     restart: always
     cap_drop:
@@ -63,13 +62,11 @@ services:
       harbor-notary:
         aliases:
           - harbor-db
-      harbor-clair:
-        aliases:
-          - harbor-db
     env_file:
       - ./common/config/db/env
+    shm_size: '1gb'
   core:
-    image: goharbor/harbor-core:v2.1.4
+    image: goharbor/harbor-core:v2.3.0
     container_name: harbor-core
     env_file:
       - ./common/config/core/env
@@ -98,9 +95,6 @@ services:
     networks:
       harbor:
       harbor-notary:
-      harbor-clair:
-        aliases:
-          - harbor-core
       harbor-chartmuseum:
         aliases:
           - harbor-core
@@ -109,7 +103,7 @@ services:
       - redis
       - postgresql
   portal:
-    image: goharbor/harbor-portal:v2.1.4
+    image: goharbor/harbor-portal:v2.3.0
     container_name: harbor-portal
     restart: always
     cap_drop:
@@ -126,7 +120,7 @@ services:
     networks:
       - harbor
   jobservice:
-    image: goharbor/harbor-jobservice:v2.1.4
+    image: goharbor/harbor-jobservice:v2.3.0
     container_name: harbor-jobservice
     env_file:
       - ./common/config/jobservice/env
@@ -147,11 +141,10 @@ services:
         target: /harbor_cust_cert
     networks:
       - harbor
-      - harbor-clair
     depends_on:
       - core
   redis:
-    image: goharbor/redis-photon:v2.1.4
+    image: goharbor/redis-photon:v2.3.0
     container_name: redis
     restart: always
     cap_drop:
@@ -167,11 +160,8 @@ services:
       harbor-chartmuseum:
         aliases:
           - redis
-      harbor-clair:
-        aliases:
-          - redis
   proxy:
-    image: goharbor/nginx-photon:v2.1.4
+    image: goharbor/nginx-photon:v2.3.0
     container_name: nginx
     restart: always
     cap_drop:
@@ -199,7 +189,7 @@ services:
       - core
       - portal
   notary-server:
-    image: goharbor/notary-server-photon:v2.1.4
+    image: goharbor/notary-server-photon:v2.3.0
     container_name: notary-server
     restart: always
     networks:
@@ -222,7 +212,7 @@ services:
       - postgresql
       - notary-signer
   notary-signer:
-    image: goharbor/notary-signer-photon:v2.1.4
+    image: goharbor/notary-signer-photon:v2.3.0
     container_name: notary-signer
     restart: always
     networks:
@@ -245,55 +235,9 @@ services:
       - ./common/config/notary/signer_env
     depends_on:
       - postgresql
-  clair:
-    networks:
-      - harbor-clair
-    container_name: clair
-    image: goharbor/clair-photon:v2.1.4
-    restart: always
-    cap_drop:
-      - ALL
-    cap_add:
-      - DAC_OVERRIDE
-      - SETGID
-      - SETUID
-    cpu_quota: 50000
-    depends_on:
-      - postgresql
-    volumes:
-      - type: bind
-        source: ./common/config/clair/config.yaml
-        target: /etc/clair/config.yaml
-      - type: bind
-        source: ./common/config/shared/trust-certificates
-        target: /harbor_cust_cert
-    env_file:
-      ./common/config/clair/clair_env
-  clair-adapter:
-    networks:
-      - harbor-clair
-    container_name: clair-adapter
-    image: goharbor/clair-adapter-photon:v2.1.4
-    restart: always
-    cap_drop:
-      - ALL
-    cap_add:
-      - DAC_OVERRIDE
-      - SETGID
-      - SETUID
-    cpu_quota: 50000
-    depends_on:
-      - clair
-      - redis
-    volumes:
-      - type: bind
-        source: ./common/config/shared/trust-certificates
-        target: /harbor_cust_cert
-    env_file:
-      ./common/config/clair-adapter/env
   trivy-adapter:
     container_name: trivy-adapter
-    image: goharbor/trivy-adapter-photon:v2.1.4
+    image: goharbor/trivy-adapter-photon:v2.3.0
     restart: always
     cap_drop:
       - ALL
@@ -315,7 +259,7 @@ services:
       ./common/config/trivy-adapter/env
   chartmuseum:
     container_name: chartmuseum
-    image: goharbor/chartmuseum-photon:v2.1.4
+    image: goharbor/chartmuseum-photon:v2.3.0
     restart: always
     cap_drop:
       - ALL
@@ -340,8 +284,6 @@ networks:
   harbor-notary:
     external: false
   notary-sig:
-    external: false
-  harbor-clair:
     external: false
   harbor-chartmuseum:
     external: false
